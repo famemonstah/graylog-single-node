@@ -21,3 +21,10 @@
       - ca-certificates
       - python3-pymongo    # needed for MongoDB replicaset module
     state: present
+
+- name: "Allow Graylog web port through ufw"
+  community.general.ufw:
+    rule: allow
+    port: "9000"
+    proto: tcp
+  when: ansible_facts['os_family'] == 'Debian'

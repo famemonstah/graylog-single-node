@@ -1,0 +1,71 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Steps 6–7 – Install OpenSearch 2.x and enable the service
+#
+# NOTE: Graylog 6.x requires OpenSearch (not Elasticsearch).
+#       The Elasticsearch 7.x install from the manual guide is replaced here.
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Add OpenSearch GPG key"
+  ansible.builtin.shell: |
+    curl -fsSL {{ opensearch_apt_key_url }} | \
+      gpg --dearmor --batch --yes -o {{ opensearch_apt_key_path }}
+  args:
+    creates: "{{ opensearch_apt_key_path }}"
+
+- name: "Add OpenSearch apt repository"
+  ansible.builtin.apt_repository:
+    repo: "{{ opensearch_apt_repo }}"
+    filename: "opensearch-{{ opensearch_version }}"
+    state: present
+    update_cache: true
+
+- name: "Install opensearch"
+  ansible.builtin.apt:
+    name: opensearch
+    state: present
+    update_cache: true
+  environment:
+    OPENSEARCH_INITIAL_ADMIN_PASSWORD: "GraylogOSearch!1"   # override in vault
+
+- name: "Configure OpenSearch"
+  ansible.builtin.template:
+    src: opensearch.yml.j2
+    dest: "{{ opensearch_config_file }}"
+    owner: root
+    group: opensearch
+    mode: "0660"
+  notify: "Restart opensearch"
+
+- name: "Set OpenSearch JVM heap size"
+  ansible.builtin.lineinfile:
+    path: "{{ opensearch_jvm_options }}"
+    regexp: "^-Xm{{ item.flag }}"
+    line: "-Xm{{ item.flag }}{{ opensearch_heap_size }}"
+  loop:
+    - { flag: "s" }
+    - { flag: "x" }
+  notify: "Restart opensearch"
+
+- name: "Set vm.max_map_count for OpenSearch"
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: "262144"
+    state: present
+    reload: true
+
+- name: "Enable and start opensearch"
+  ansible.builtin.service:
+    name: opensearch
+    state: started
+    enabled: true
+
+- name: "Wait for OpenSearch to be ready"
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ opensearch_http_port }}"
+    method: GET
+    status_code: 200
+  register: opensearch_health
+  retries: 20
+  delay: 10
+  until: opensearch_health.status == 200

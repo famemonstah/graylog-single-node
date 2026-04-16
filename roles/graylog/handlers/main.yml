@@ -1,0 +1,19 @@
+---
+- name: "Restart mongod"
+  ansible.builtin.service:
+    name: mongod
+    state: restarted
+
+- name: "Restart graylog-datanode"
+  ansible.builtin.service:
+    name: graylog-datanode
+    state: restarted
+
+- name: "Restart graylog-server"
+  ansible.builtin.service:
+    name: graylog-server
+    state: restarted
+
+- name: "Reload systemd"
+  ansible.builtin.systemd:
+    daemon_reload: true

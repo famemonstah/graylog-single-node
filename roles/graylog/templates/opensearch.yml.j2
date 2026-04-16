@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenSearch configuration  –  managed by Ansible, do not edit manually
+# Generated for: {{ inventory_hostname }}
+# ─────────────────────────────────────────────────────────────────────────────
+
+cluster.name: {{ opensearch_cluster_name }}
+node.name: {{ opensearch_node_name }}
+
+# Listen on all interfaces so other nodes can reach this one
+network.host: 127.0.0.1
+http.port: {{ opensearch_http_port }}
+
+# ── Discovery ─────────────────────────────────────────────────────────────────
+discovery.type: single-node
+
+# ── Graylog-required settings ─────────────────────────────────────────────────
+# Graylog manages its own index templates; block auto-creation to prevent conflicts
+action.auto_create_index: false
+
+# ── Security ─────────────────────────────────────────────────────────────────
+{% if opensearch_disable_security | bool %}
+plugins.security.disabled: true
+{% else %}
+plugins.security.disabled: false
+# Add TLS/cert paths below when enabling security
+{% endif %}

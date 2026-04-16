@@ -1,0 +1,17 @@
+# Ansible retry files
+*.retry
+
+# SSH keys / secrets
+*.pem
+*.key
+id_*
+*.ovpn
+
+# Python virtualenvs
+.venv/
+__pycache__/
+
+# Editor
+.vscode/
+.idea/
+*.swp

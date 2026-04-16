@@ -1,0 +1,20 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 5 – Install Java (OpenJDK)
+# Graylog 6.x recommends JDK 17; JDK 11 still works
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Install Java"
+  ansible.builtin.apt:
+    name: "{{ java_package }}"
+    state: present
+    update_cache: true
+
+- name: "Verify Java installation"
+  ansible.builtin.command: java -version
+  register: java_version_output
+  changed_when: false
+
+- name: "Show Java version"
+  ansible.builtin.debug:
+    msg: "{{ java_version_output.stderr }}"

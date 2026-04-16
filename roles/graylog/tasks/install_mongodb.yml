@@ -1,0 +1,62 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Steps 3–4 – Install MongoDB 7.0 and enable the service
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Add MongoDB GPG key"
+  ansible.builtin.shell: |
+    curl -fsSL {{ mongodb_apt_key_url }} | \
+      gpg --dearmor -o {{ mongodb_apt_key_path }}
+  args:
+    creates: "{{ mongodb_apt_key_path }}"
+
+- name: "Add MongoDB apt repository"
+  ansible.builtin.apt_repository:
+    repo: "{{ mongodb_apt_repo }}"
+    filename: "mongodb-org-{{ mongodb_version }}"
+    state: present
+    update_cache: true
+
+- name: "Install mongodb-org"
+  ansible.builtin.apt:
+    name: mongodb-org
+    state: present
+    update_cache: true
+
+- name: "Configure MongoDB bind IP and replication"
+  ansible.builtin.template:
+    src: mongod.conf.j2
+    dest: /etc/mongod.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: "Restart mongod"
+
+- name: "Enable and start mongod"
+  ansible.builtin.service:
+    name: mongod
+    state: started
+    enabled: true
+
+- name: "Wait for MongoDB to be ready"
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ mongodb_port }}"
+    delay: 5
+    timeout: 60
+
+- name: "Initiate MongoDB replica set (idempotent)"
+  ansible.builtin.command: >
+    mongosh --quiet --eval
+    'try { var s = rs.status(); if (s.ok) { print("already_init") } } catch(e) { rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]}) }'
+  register: rs_result
+  changed_when: "'already_init' not in rs_result.stdout"
+
+- name: "Wait for MongoDB primary to be elected"
+  ansible.builtin.command: >
+    mongosh --quiet --eval 'rs.isMaster().ismaster'
+  register: is_primary
+  until: "'true' in is_primary.stdout"
+  retries: 10
+  delay: 3
+  changed_when: false

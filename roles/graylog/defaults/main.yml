@@ -1,0 +1,42 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# roles/graylog/defaults/main.yml
+# All variables with sensible defaults – override in group_vars or host_vars
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Graylog ───────────────────────────────────────────────────────────────────
+graylog_version: "7.0"
+
+graylog_password_secret: ""           # openssl rand -hex 32
+graylog_root_password_sha2: ""        # echo -n 'pass' | sha256sum | cut -d' ' -f1
+graylog_root_username: "admin"
+graylog_root_email: ""
+graylog_root_timezone: "UTC"
+
+graylog_is_leader: true
+
+graylog_http_bind_address: "0.0.0.0:9000"
+graylog_http_publish_uri: "http://127.0.0.1:9000/"
+graylog_http_external_uri: "http://127.0.0.1:9000/"
+
+graylog_mongodb_uri: "mongodb://127.0.0.1:27017/graylog?replicaSet=rs0"
+
+graylog_data_dir: "/var/lib/graylog-server/data"
+graylog_message_journal_enabled: true
+graylog_message_journal_dir: "/var/lib/graylog-server/journal"
+graylog_message_journal_max_size: "5gb"
+
+graylog_processbuffer_processors: 5
+graylog_outputbuffer_processors: 3
+
+# ── Graylog Data Node (embedded OpenSearch) ───────────────────────────────────
+datanode_heap: "1g"                   # ~50% of RAM, max 31g
+
+# ── MongoDB ───────────────────────────────────────────────────────────────────
+mongodb_version: "8.0"
+mongodb_bind_ip: "127.0.0.1"
+mongodb_port: 27017
+mongodb_replicaset_name: "rs0"
+
+# ── Java ──────────────────────────────────────────────────────────────────────
+java_package: "openjdk-17-jre-headless"

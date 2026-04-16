@@ -1,0 +1,65 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Steps 11–13 – Generate secrets, write server.conf, start Graylog
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Validate that graylog_password_secret is set"
+  ansible.builtin.assert:
+    that:
+      - graylog_password_secret | length > 0
+    fail_msg: >
+      'graylog_password_secret' must not be empty.
+      Generate one with:  pwgen -s 96 1
+
+- name: "Validate that graylog_root_password_sha2 is set"
+  ansible.builtin.assert:
+    that:
+      - graylog_root_password_sha2 | length > 0
+    fail_msg: >
+      'graylog_root_password_sha2' must not be empty.
+      Generate one with:  echo -n 'yourpassword' | sha256sum | cut -d' ' -f1
+
+- name: "Write Graylog server configuration"
+  ansible.builtin.template:
+    src: server.conf.j2
+    dest: "{{ graylog_config_file }}"
+    owner: root
+    group: graylog
+    mode: "0640"
+    force: true
+  notify: "Restart graylog-server"
+
+- name: "Reload systemd"
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: "Enable and start graylog-server"
+  ansible.builtin.service:
+    name: graylog-server
+    state: started
+    enabled: true
+
+- name: "Wait for Graylog web interface to be ready"
+  ansible.builtin.wait_for:
+    host: "127.0.0.1"
+    port: 9000
+    delay: 10
+    timeout: 300
+
+- name: "Fetch preflight one-time password from server log"
+  ansible.builtin.shell: >
+    grep -o "password '[^']*'" /var/log/graylog-server/server.log | tail -1 | grep -o "'[^']*'" | tr -d "'"
+  register: graylog_preflight_password
+  changed_when: false
+  failed_when: false
+
+- name: "Print Graylog preflight login details"
+  ansible.builtin.debug:
+    msg:
+      - "============================================"
+      - " Graylog is UP — complete the setup wizard"
+      - " URL      : http://{{ ansible_host }}:9000"
+      - " Username : admin"
+      - " Password : {{ graylog_preflight_password.stdout | default('check /var/log/graylog-server/server.log') }}"
+      - " (one-time preflight password — your normal admin password takes over after wizard)"
+      - "============================================"

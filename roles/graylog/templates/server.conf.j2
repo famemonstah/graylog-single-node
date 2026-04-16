@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Graylog Server Configuration  –  managed by Ansible, do not edit manually
+# Generated for: {{ inventory_hostname }}
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Cluster / Node identity ───────────────────────────────────────────────────
+# is_leader: Only ONE node should be the leader at a time
+is_leader = {{ graylog_is_leader | bool | lower }}
+
+# ── Security ─────────────────────────────────────────────────────────────────
+# Generate with: pwgen -s 96 1
+password_secret = {{ graylog_password_secret }}
+
+# SHA-256 hash of your admin password
+# Generate with: echo -n 'yourpassword' | sha256sum | cut -d' ' -f1
+root_password_sha2 = {{ graylog_root_password_sha2 }}
+
+# ── Root user ─────────────────────────────────────────────────────────────────
+root_username = {{ graylog_root_username }}
+{% if graylog_root_email | length > 0 %}
+root_email = {{ graylog_root_email }}
+{% endif %}
+root_timezone = {{ graylog_root_timezone }}
+
+# ── HTTP / Web interface ──────────────────────────────────────────────────────
+# Bind address and port for the Graylog REST API and web interface
+http_bind_address = {{ graylog_http_bind_address }}
+
+# URI that other Graylog nodes use to talk to this node
+http_publish_uri = {{ graylog_http_publish_uri }}
+
+# URI used by browsers / load-balancer
+http_external_uri = {{ graylog_http_external_uri }}
+
+# ── MongoDB ───────────────────────────────────────────────────────────────────
+# graylog-datanode self-registers as the search backend; no elasticsearch_hosts needed
+mongodb_uri = {{ graylog_mongodb_uri }}
+
+# ── Data directory ───────────────────────────────────────────────────────────
+data_dir = {{ graylog_data_dir }}
+
+# ── Message journal ───────────────────────────────────────────────────────────
+message_journal_enabled = {{ graylog_message_journal_enabled | bool | lower }}
+message_journal_dir = {{ graylog_message_journal_dir }}
+message_journal_max_size = {{ graylog_message_journal_max_size }}
+
+# ── Processing ────────────────────────────────────────────────────────────────
+processbuffer_processors = {{ graylog_processbuffer_processors }}
+outputbuffer_processors  = {{ graylog_outputbuffer_processors }}

@@ -1,0 +1,19 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Graylog Data Node configuration  –  managed by Ansible, do not edit manually
+# Generated for: {{ inventory_hostname }}
+#
+# Data Node manages embedded OpenSearch internally.
+# Full reference: https://go2docs.graylog.org/current/setting_up_graylog/data_node_configuration_file.htm
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Must be identical to password_secret in server.conf
+password_secret = {{ graylog_password_secret }}
+
+# MongoDB connection string
+mongodb_uri = {{ graylog_mongodb_uri }}
+
+# Heap for the embedded OpenSearch (~50% of RAM, max 31g)
+opensearch_heap = {{ datanode_heap }}
+
+# Absolute path to the bundled OpenSearch distribution (required)
+opensearch_location = /usr/share/graylog-datanode/dist

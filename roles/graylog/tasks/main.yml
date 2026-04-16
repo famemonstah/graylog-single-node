@@ -1,0 +1,23 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Graylog 7.0 stack:
+#   1. MongoDB 8.0     – metadata store
+#   2. graylog-datanode – bundles OpenSearch + its own JVM (no separate install)
+#   3. graylog-server  – core application
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Install system dependencies"
+  ansible.builtin.include_tasks: install_dependencies.yml
+  tags: [graylog, dependencies]
+
+- name: "Install and start MongoDB"
+  ansible.builtin.include_tasks: install_mongodb.yml
+  tags: [graylog, mongodb]
+
+- name: "Install Graylog datanode and server"
+  ansible.builtin.include_tasks: install_graylog.yml
+  tags: [graylog, install]
+
+- name: "Configure and start Graylog"
+  ansible.builtin.include_tasks: configure_graylog.yml
+  tags: [graylog, configure]

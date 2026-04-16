@@ -1,0 +1,43 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Configure MongoDB Replica Set (runs ONCE from graylog_primary)
+#
+# Called from site.yml Phase 2 after all nodes have MongoDB running.
+# Requires python3-pymongo on the primary node (installed in dependencies).
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Check if replica set is already initialised"
+  community.mongodb.mongodb_status:
+    login_host: 127.0.0.1
+    login_port: "{{ mongodb_port }}"
+    replica_set: "{{ mongodb_replicaset_name }}"
+  register: rs_status
+  ignore_errors: true
+
+- name: "Initialise MongoDB replica set"
+  community.mongodb.mongodb_replicaset:
+    login_host: 127.0.0.1
+    login_port: "{{ mongodb_port }}"
+    replica_set: "{{ mongodb_replicaset_name }}"
+    members: >-
+      {{
+        groups['graylog'] | map('extract', hostvars, ['ansible_default_ipv4', 'address'])
+        | map('regex_replace', '$', ':' ~ mongodb_port | string)
+        | list
+      }}
+  when: rs_status is failed or rs_status.replicaset is not defined
+
+- name: "Wait for replica set PRIMARY to be elected"
+  community.mongodb.mongodb_status:
+    login_host: 127.0.0.1
+    login_port: "{{ mongodb_port }}"
+    replica_set: "{{ mongodb_replicaset_name }}"
+    validate: minimal
+  register: rs_check
+  retries: 20
+  delay: 10
+  until: rs_check.replicaset.primary is defined
+
+- name: "Show replica set status"
+  ansible.builtin.debug:
+    var: rs_check.replicaset

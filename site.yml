@@ -1,0 +1,6 @@
+---
+- name: "Deploy Graylog (single node)"
+  hosts: graylog
+  become: true
+  roles:
+    - role: graylog

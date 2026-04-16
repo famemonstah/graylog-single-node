@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  author: "giga maglakelidze"
+  description: "Install and configure Graylog 6.x with MongoDB 7.0 and OpenSearch 2.x (single-node & multi-node cluster)"
+  license: "Apache-2.0"
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy       # 22.04
+        - noble       # 24.04
+  galaxy_tags:
+    - graylog
+    - logging
+    - mongodb
+    - opensearch
+    - monitoring
+
+dependencies: []

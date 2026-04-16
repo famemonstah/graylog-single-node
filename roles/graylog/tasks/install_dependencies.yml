@@ -1,0 +1,23 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Step 1 – Install system dependencies
+# Matches manual step: apt install apt-transport-https gnupg2 uuid-runtime pwgen curl dirmngr -y
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Update apt cache"
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: "Install required system packages"
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - gnupg2
+      - uuid-runtime
+      - pwgen
+      - curl
+      - dirmngr
+      - ca-certificates
+      - python3-pymongo    # needed for MongoDB replicaset module
+    state: present

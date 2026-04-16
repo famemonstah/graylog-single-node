@@ -1,0 +1,102 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Graylog 7.0 – install graylog-datanode + graylog-server
+# ─────────────────────────────────────────────────────────────────────────────
+
+- name: "Download Graylog 7.0 repository package"
+  ansible.builtin.get_url:
+    url: "{{ graylog_apt_repo_pkg }}"
+    dest: "/tmp/graylog-{{ graylog_version }}-repository_latest.deb"
+    mode: "0644"
+
+- name: "Install Graylog repository package"
+  ansible.builtin.apt:
+    deb: "/tmp/graylog-{{ graylog_version }}-repository_latest.deb"
+    state: present
+
+- name: "Update apt cache after adding Graylog repo"
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: "Install graylog-datanode and graylog-server"
+  ansible.builtin.apt:
+    name:
+      - graylog-datanode
+      - graylog-server
+    state: present
+
+- name: "Set vm.max_map_count for datanode embedded OpenSearch"
+  ansible.posix.sysctl:
+    name: vm.max_map_count
+    value: "262144"
+    state: present
+    sysctl_file: /etc/sysctl.d/99-graylog-datanode.conf
+    reload: true
+
+- name: "Ensure /etc/graylog/datanode directory exists"
+  ansible.builtin.file:
+    path: /etc/graylog/datanode
+    state: directory
+    owner: root
+    group: graylog-datanode
+    mode: "0750"
+
+- name: "Ensure graylog-datanode data directory exists"
+  ansible.builtin.file:
+    path: /var/lib/graylog-datanode
+    state: directory
+    owner: graylog-datanode
+    group: graylog-datanode
+    mode: "0750"
+
+- name: "Ensure /data directory exists (datanode default)"
+  ansible.builtin.file:
+    path: /data
+    state: directory
+    owner: graylog-datanode
+    group: graylog-datanode
+    mode: "0750"
+
+- name: "Ensure /datanode subdirectories exist"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: graylog-datanode
+    group: graylog-datanode
+    mode: "0750"
+  loop:
+    - /datanode/data
+    - /datanode/logs
+    - /datanode/config
+
+- name: "Configure graylog-datanode"
+  ansible.builtin.template:
+    src: datanode.conf.j2
+    dest: /etc/graylog/datanode/datanode.conf
+    owner: root
+    group: graylog-datanode
+    mode: "0640"
+    force: true
+  notify: "Restart graylog-datanode"
+
+- name: "Enable and start graylog-datanode"
+  ansible.builtin.service:
+    name: graylog-datanode
+    state: started
+    enabled: true
+
+- name: "Ensure Graylog data directory exists"
+  ansible.builtin.file:
+    path: "{{ graylog_data_dir }}"
+    state: directory
+    owner: graylog
+    group: graylog
+    mode: "0750"
+
+- name: "Ensure Graylog journal directory exists"
+  ansible.builtin.file:
+    path: "{{ graylog_message_journal_dir }}"
+    state: directory
+    owner: graylog
+    group: graylog
+    mode: "0750"
